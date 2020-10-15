@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, json, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from requests.bucket_req import *
+# from flask_fontawesome import FontAwesome
 
 
 app = Flask(__name__)
@@ -128,6 +129,63 @@ def getWish():
             return render_template('error.html', error='Unauthorized Access')
     except Exception as e:
         return render_template('error.html', error=str(e))
+
+
+@app.route('/getWishById', methods=['POST'])
+def getWishById():
+    try:
+        if session.get('user'):
+
+            _id = request.form['id']
+            _user = session.get('user')
+
+            curr_wish = get_wish_by_id(_id, _user)
+            wish = []
+            wish.append({'Id': curr_wish.wish_id,
+                         'Title': curr_wish.wish_title,
+                         'Description': curr_wish.wish_description})
+
+            return json.dumps(wish, ensure_ascii=False)
+        else:
+            return render_template('error.html', error='Unauthorized Access')
+    except Exception as e:
+        return render_template('error.html', error=str(e))
+
+
+@app.route('/updateWish', methods=['POST'])
+def updateWish():
+    try:
+        if session.get('user'):
+            _user = session.get('user')
+            _title = request.form['title']
+            _description = request.form['description']
+            _wish_id = request.form['id']
+
+            res = update_wish(_title, _description, _wish_id, _user)
+            if res:
+                return json.dumps({'status': 'OK'})
+            else:
+                return json.dumps({'status': 'ERROR'})
+    except Exception as e:
+        return json.dumps({'status': 'Unauthorized access'})
+
+
+@app.route('/deleteWish', methods=['POST'])
+def deleteWish():
+    try:
+        if session.get('user'):
+            _id = request.form['id']
+            _user = session.get('user')
+
+            res = delete_wish(_id, _user)
+            if res:
+                return json.dumps({'status': 'OK'})
+            else:
+                return json.dumps({'status': 'An Error occured'})
+        else:
+            return render_template('error.html', error='Unauthorized Access')
+    except Exception as e:
+        return json.dumps({'status': str(e)})
 
 
 if __name__ == "__main__":

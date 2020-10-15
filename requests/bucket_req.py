@@ -48,9 +48,45 @@ def create_wish(title, description, user):
 
 
 def get_wish_by_user(user):
-    # select * from tbl_wish where wish_user_id = p_user_id;
     uids = db.session.query(tws).filter(tws.wish_user_id == user).all()
     if len(uids) == 0:
         return None
     else:
         return uids
+
+
+def get_wish_by_id(wish_id, user):
+    wish = db.session.query(tws).filter(tws.wish_id == wish_id,
+                                        tws.wish_user_id == user).all()
+    if len(wish) == 0:
+        return None
+    else:
+        return wish[0]
+
+
+def update_wish(title, description, wish_id, user):
+    try:
+        db.session.query(tws).filter(
+            tws.wish_id == wish_id,
+            tws.wish_user_id == user)\
+            .update({
+              tws.wish_title: title,
+              tws.wish_description: description
+            })
+
+        db.session.commit()
+        return True
+    except Exception:
+        return False
+
+
+def delete_wish(wish_id, user):
+    try:
+        db.session.query(tws).filter(
+            tws.wish_id == wish_id,
+            tws.wish_user_id == user)\
+            .delete()
+        db.session.commit()
+        return True
+    except Exception:
+        return False
