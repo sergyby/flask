@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, json, session, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 from requests.bucket_req import *
-# from flask_fontawesome import FontAwesome
 
 
 app = Flask(__name__)
@@ -10,6 +9,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///BucketList.db'
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+page_limit = 3
 
 
 @app.route("/")
@@ -106,25 +106,30 @@ def addWish():
         return render_template('error.html', error=str(e))
 
 
-@app.route('/getWish')
+@app.route('/getWish', methods=['POST'])
 def getWish():
     try:
         if session.get('user'):
             _user = session.get('user')
+            _limit = page_limit
+            _offset = request.form['offset']
+            _total_records = 0
 
-            wishes = get_wish_by_user(_user)
+            wishes = get_wish_pagination_by_user(_user, int(_limit), int(_offset))
             wishes_dict = []
+            response = []
             # for wish in wishes:
             for i in range(len(wishes)):
-                wish = wishes[i]
                 wish_dict = {
-                    'Id': wish.wish_id,
-                    'Title': wish.wish_title,
-                    'Description': wish.wish_description,
-                    'Date': wish.wish_date}
+                    'Id': wishes[i].wish_id,
+                    'Title': wishes[i].wish_title,
+                    'Description': wishes[i].wish_description,
+                    'Date': wishes[i].wish_date}
                 wishes_dict.append(wish_dict)
 
-            return json.dumps(wishes_dict)
+            response.append(wishes_dict)
+            response.append({'total': get_count_wish(_user)})
+            return json.dumps(response)
         else:
             return render_template('error.html', error='Unauthorized Access')
     except Exception as e:

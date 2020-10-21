@@ -55,6 +55,17 @@ def get_wish_by_user(user):
         return uids
 
 
+def get_wish_pagination_by_user(user_id, limit, offset):
+    uids = db.session.query(tws).filter(tws.wish_user_id == user_id).order_by(tws.wish_id)
+    uids = uids.limit(limit)
+    uids = uids.offset(offset)
+    return uids.all()
+
+
+def get_count_wish(user):
+    return db.session.query(tws).filter(tws.wish_user_id == user).count()
+
+
 def get_wish_by_id(wish_id, user):
     wish = db.session.query(tws).filter(tws.wish_id == wish_id,
                                         tws.wish_user_id == user).all()
